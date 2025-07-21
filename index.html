@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NATIONWIDE TOOLS INVENTORY</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      color: white;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    header img {
+      width: 150px;
+    }
+    h1 {
+      color: white;
+    }
+    section {
+      margin: 20px;
+      display: none;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      color: black;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    tbody tr:nth-child(even) {
+      background-color: rgba(0, 0, 0, 0.03);
+    }
+    tbody tr:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    input, select {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px;
+      margin: 5px;
+      width: 180px;
+    }
+    .btn-toggle {
+      background: linear-gradient(to right, #0066ff, #00ccff);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 13px;
+      margin: 5px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+      cursor: pointer;
+    }
+    .btn-toggle:hover {
+      background: linear-gradient(to right, #0040ff, #00bfff);
+    }
+    .toggle-container {
+      text-align: center;
+    }
+    .main-container {
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 1200px;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="SF-Logo-Internet-TV-Phone-Blue.png" alt="Logo">
+    <h1>NATIONWIDE TOOLS INVENTORY</h1>
+  </header>
+
+  <div class="toggle-container">
+    <button class="btn-toggle" onclick="toggleSection('in')"><i class="fas fa-arrow-down"></i> Inventory IN</button>
+    <button class="btn-toggle" onclick="toggleSection('out')"><i class="fas fa-arrow-up"></i> Inventory OUT</button>
+    <button class="btn-toggle" onclick="toggleDatabaseView()"><i class="fas fa-database"></i> View All Records</button>
+    <button class="btn-toggle" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+  </div>
+
+  <div class="main-container">
+    <section id="section-in">
+      <h2>Inventory IN</h2>
+      <input id="itemIn" placeholder="Item">
+      <input id="qtyIn" placeholder="Qty">
+      <input id="vendorIn" placeholder="Vendor">
+      <input id="poIn" placeholder="PO">
+      <input id="cityIn" placeholder="City">
+      <input id="dateIn" type="date">
+      <input id="remarksIn" placeholder="Remarks">
+      <button class="btn-toggle" onclick="addRecord('in')">Add Record</button>
+      <table>
+        <thead>
+          <tr><th>Item</th><th>Qty</th><th>Date</th><th>Vendor</th><th>PO</th><th>City</th><th>Remarks</th></tr>
+        </thead>
+        <tbody id="inTable"></tbody>
+      </table>
+    </section>
+
+    <section id="section-out">
+      <h2>Inventory OUT</h2>
+      <input id="itemOut" placeholder="Item">
+      <input id="qtyOut" placeholder="Qty">
+      <input id="deptOut" placeholder="Dept">
+      <input id="cityOut" placeholder="City">
+      <input id="poOut" placeholder="PO Number">
+      <input id="tcsOut" placeholder="TCS Tracking Number">
+      <input id="dateOut" type="date">
+      <input id="remarksOut" placeholder="Remarks">
+      <button class="btn-toggle" onclick="addRecord('out')">Add Record</button>
+      <table>
+        <thead>
+          <tr><th>Item</th><th>Qty</th><th>Date</th><th>Dept</th><th>City</th><th>PO Number</th><th>TCS</th><th>Remarks</th></tr>
+        </thead>
+        <tbody id="outTable"></tbody>
+      </table>
+    </section>
+
+    <section id="databaseView">
+      <h2>Combined Inventory</h2>
+      <label>Filter by Type:</label>
+      <select id="typeFilter" onchange="toggleDatabaseView()">
+        <option value="all">All</option>
+        <option value="in">IN</option>
+        <option value="out">OUT</option>
+      </select>
+
+      <label>Search by City:</label>
+      <input type="text" id="citySearch" oninput="toggleDatabaseView()" placeholder="Enter city name">
+
+      <label>Search by Item:</label>
+      <input type="text" id="itemSearch" oninput="toggleDatabaseView()" placeholder="Enter item name">
+
+      <label>Search by Vendor/Dept:</label>
+      <input type="text" id="vendorDeptSearch" oninput="toggleDatabaseView()" placeholder="Enter vendor or dept">
+
+      <label>Search by Date:</label>
+      <input type="text" id="dateSearch" oninput="toggleDatabaseView()" placeholder="e.g. 2025-07">
+
+      <label>Search by PO Number:</label>
+      <input type="text" id="poSearch" oninput="toggleDatabaseView()" placeholder="Enter PO Number">
+
+      <label>Search by TCS Tracking Number:</label>
+      <input type="text" id="tcsSearch" oninput="toggleDatabaseView()" placeholder="Enter TCS Tracking Number">
+
+      <button class="btn-toggle" onclick="resetFilters()">Reset Filters</button>
+
+      <table id="combinedTable">
+        <thead>
+          <tr><th>Type</th><th>Item</th><th>Qty</th><th>Date</th><th>Vendor Name</th><th>City</th><th>PO</th><th>TCS</th><th>Date of Delivery</th><th>Action</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    function toggleSection(section) {
+      document.getElementById("section-in").style.display = section === "in" ? "block" : "none";
+      document.getElementById("section-out").style.display = section === "out" ? "block" : "none";
+      document.getElementById("databaseView").style.display = "none";
+      if (section === 'in') loadInData();
+      if (section === 'out') loadOutData();
+    }
+
+    function getData(type) {
+      return JSON.parse(localStorage.getItem("inventory_" + type)) || [];
+    }
+
+    function saveData(type, data) {
+      localStorage.setItem("inventory_" + type, JSON.stringify(data));
+    }
+
+    function cap(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function addRecord(type) {
+      const data = getData(type);
+      const record = {
+        item: document.getElementById("item" + cap(type)).value,
+        qty: document.getElementById("qty" + cap(type)).value,
+        remarks: document.getElementById("remarks" + cap(type)).value,
+        date: document.getElementById("date" + cap(type)).value
+      };
+      if (type === "in") {
+        record.vendor = document.getElementById("vendorIn").value;
+        record.po = document.getElementById("poIn").value;
+        record.city = document.getElementById("cityIn").value;
+      } else {
+        record.dept = document.getElementById("deptOut").value;
+        record.city = document.getElementById("cityOut").value;
+        record.po = document.getElementById("poOut").value;
+        record.tcs = document.getElementById("tcsOut").value;
+      }
+      data.push(record);
+      saveData(type, data);
+      toggleSection(type);
+
+      // Clear inputs after adding record
+      const inputs = document.querySelectorAll(
+        type === "in"
+          ? "#section-in input"
+          : "#section-out input"
+      );
+      inputs.forEach(input => input.value = "");
+    }
+
+    function loadInData() {
+      const tbody = document.getElementById("inTable");
+      tbody.innerHTML = "";
+      getData("in").forEach(r => {
+        tbody.innerHTML += `<tr><td>${r.item}</td><td>${r.qty}</td><td>${r.date}</td><td>${r.vendor}</td><td>${r.po}</td><td>${r.city}</td><td>${r.remarks}</td></tr>`;
+      });
+    }
+
+    function loadOutData() {
+      const tbody = document.getElementById("outTable");
+      tbody.innerHTML = "";
+      getData("out").forEach(r => {
+        tbody.innerHTML += `<tr>
+          <td>${r.item}</td><td>${r.qty}</td><td>${r.date}</td>
+          <td>${r.dept}</td><td>${r.city}</td><td>${r.po}</td><td>${r.tcs || ''}</td><td>${r.remarks}</td>
+        </tr>`;
+      });
+    }
+
+    function toggleDatabaseView() {
+      document.getElementById("section-in").style.display = "none";
+      document.getElementById("section-out").style.display = "none";
+      document.getElementById("databaseView").style.display = "block";
+
+      const tbody = document.querySelector("#combinedTable tbody");
+      tbody.innerHTML = "";
+
+      const selectedType = document.getElementById("typeFilter").value;
+      const searchCity = document.getElementById("citySearch").value.trim().toLowerCase();
+      const searchItem = document.getElementById("itemSearch").value.trim().toLowerCase();
+      const searchVendorDept = document.getElementById("vendorDeptSearch").value.trim().toLowerCase();
+      const searchDate = document.getElementById("dateSearch").value.trim().toLowerCase();
+      const searchPO = document.getElementById("poSearch").value.trim().toLowerCase();
+      const searchTCS = document.getElementById("tcsSearch").value.trim().toLowerCase();
+
+      ["in", "out"].forEach(type => {
+        if (selectedType === "all" || selectedType === type) {
+          getData(type).forEach((r, i) => {
+            const city = (r.city || "").toLowerCase();
+            const item = (r.item || "").toLowerCase();
+            const vOrD = (type === 'in' ? (r.vendor || "") : (r.dept || "")).toLowerCase();
+            const date = (r.date || "").toLowerCase();
+            const po = (r.po || "").toLowerCase();
+            const tcs = (r.tcs || "").toLowerCase();
+
+            if ((searchCity && !city.includes(searchCity)) ||
+                (searchItem && !item.includes(searchItem)) ||
+                (searchVendorDept && !vOrD.includes(searchVendorDept)) ||
+                (searchDate && !date.includes(searchDate)) ||
+                (searchPO && !po.includes(searchPO)) ||
+                (searchTCS && !tcs.includes(searchTCS))) return;
+
+            tbody.innerHTML += `
+              <tr>
+                <td>${type.toUpperCase()}</td>
+                <td contenteditable>${r.item}</td>
+                <td contenteditable>${r.qty}</td>
+                <td contenteditable>${r.date}</td>
+                <td contenteditable>${type === 'in' ? r.vendor : r.dept}</td>
+                <td contenteditable>${r.city || ''}</td>
+                <td contenteditable>${r.po || ''}</td>
+                <td contenteditable>${r.tcs || ''}</td>
+                <td contenteditable>${r.remarks}</td>
+                <td>
+                  <button onclick="editRecord('${type}', ${i}, this)">Edit</button>
+                  <button onclick="deleteRecord('${type}', ${i})">Delete</button>
+                </td>
+              </tr>`;
+          });
+        }
+      });
+    }
+
+    function editRecord(type, index, btn) {
+      const cells = btn.closest("tr").querySelectorAll("td");
+      const updated = {
+        item: cells[1].innerText.trim(),
+        qty: cells[2].innerText.trim(),
+        date: cells[3].innerText.trim(),
+        remarks: cells[8].innerText.trim()
+      };
+      if (type === "in") {
+        updated.vendor = cells[4].innerText.trim();
+        updated.city = cells[5].innerText.trim();
+        updated.po = cells[6].innerText.trim();
+      } else {
+        updated.dept = cells[4].innerText.trim();
+        updated.city = cells[5].innerText.trim();
+        updated.po = cells[6].innerText.trim();
+        updated.tcs = cells[7].innerText.trim();
+      }
+      const data = getData(type);
+      data[index] = updated;
+      saveData(type, data);
+      alert("Record updated!");
+    }
+
+    function deleteRecord(type, index) {
+      const data = getData(type);
+      if (confirm("Are you sure to delete this record?")) {
+        data.splice(index, 1);
+        saveData(type, data);
+        toggleDatabaseView();
+      }
+    }
+
+    function exportToExcel() {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(getData("in")), "Inventory_IN");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(getData("out")), "Inventory_OUT");
+      XLSX.writeFile(wb, "NATIONWIDE_INVENTORY.xlsx");
+    }
+
+    function resetFilters() {
+      document.getElementById("typeFilter").value = "all";
+      document.getElementById("citySearch").value = "";
+      document.getElementById("itemSearch").value = "";
+      document.getElementById("vendorDeptSearch").value = "";
+      document.getElementById("dateSearch").value = "";
+      document.getElementById("poSearch").value = "";
+      document.getElementById("tcsSearch").value = "";
+      toggleDatabaseView();
+    }
+
+    window.onload = () => toggleSection("in");
+  </script>
+</body>
+</html>
